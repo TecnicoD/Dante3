@@ -5,17 +5,19 @@ using System.Data;
 using System.Data.OleDb;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.ConstrainedExecution;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace Dante3
 {
 
     public partial class Form1 : Form
     {
-
-
+        private int cero = 0;
+        private bool f = false;
         ///cadena es la ruta del archivo de acces
         ///se obtiene:
         ///1-llendo a origenes de datos
@@ -36,6 +38,24 @@ namespace Dante3
         /// y el dataadapter (donde va el comand )
         OleDbCommand comd = new OleDbCommand();
         OleDbDataAdapter adapter = new OleDbDataAdapter();
+
+        #region.metodos
+        bool prueba()
+        {
+            string cadena = this.CmbBool.SelectedItem.ToString();
+            if (cadena == "true")
+            {
+                return  true;
+
+            }
+            else
+            {
+                return false;
+            }
+        }
+  
+        
+
         public void consultaNombres()
         {
             OleDbConnection miconexion = new OleDbConnection(cadena);
@@ -107,23 +127,52 @@ namespace Dante3
         }
         private void Editar()
         {
+            //falta jugar con esto
+            //deberia ser una clase o que aca?
+                        
+            int REALid = Convert.ToInt32(TxtId.Text);
+            string nombre = TxtNombre.Text;
+            string apellido = TxtApellido.Text;
+            string problema = TxtProblema.Text;
+            string resolucion = TxtResolucion.Text;
+            string remuneracion = TxtRemuneracion.Text;
+            string fecha = TxtFecha.Text;
+            DateTime FechaReal = DateTime.Parse(fecha);
+            bool f = prueba();
+
+
 
             OleDbConnection CN = new OleDbConnection(cadena);
        
-            string QuerieUpdate = "UPDATE Clientes SET Nombre = 'Davidbec' WHERE Id =" + 1;
-          
+            string QuerieUpdatePrueba = "UPDATE Clientes SET Nombre = 'Davidbec' WHERE Id =" + REALid;
+            string QuerieUpdate = "UPDATE Clientes SET Nombre=(?),Apellido=(?),Problema=(?),Resolucion=(?),Estado=(?),Remuneracion=(?),Fecha = (?) WHERE Id =" + REALid;
+
+            
+            
+
             CN.Open();
             OleDbCommand Micomando = new OleDbCommand(QuerieUpdate, CN);
+
+            //parametros
+            Micomando.Parameters.Add("?",nombre);
+            Micomando.Parameters.Add("?", apellido);
+            Micomando.Parameters.Add("?", problema);
+            Micomando.Parameters.Add("?", resolucion);
+            Micomando.Parameters.Add("?", f); //no entiendo porque anda y tampoco porque no andaba
+            Micomando.Parameters.Add("?", remuneracion);
+            Micomando.Parameters.Add("?", FechaReal); // ya anda
+
             int resultado = Micomando.ExecuteNonQuery();
             CN.Close();
 
         }
         private void Eliminar()
-        {
-
-            OleDbConnection CN = new OleDbConnection(cadena);
-            string QuerieDelete = "DELETE FROM Clientes WHERE Id =" + 1;
-
+        {  
+         string ID = TxtId.Text;
+         //string nombre2 = TxtNombre.Text;
+         int REALid = Convert.ToInt32(ID);
+         OleDbConnection CN = new OleDbConnection(cadena);
+         string QuerieDelete = "DELETE FROM Clientes WHERE Id =" + ID;
             CN.Open();
             OleDbCommand Micomando = new OleDbCommand(QuerieDelete, CN);
             int resultado = Micomando.ExecuteNonQuery();
@@ -142,18 +191,21 @@ namespace Dante3
             string resolucion = TxtResolucion.Text;
             string remuneracion = TxtRemuneracion.Text;
             string fecha = TxtFecha.Text;
-            
+            DateTime FechaReal = DateTime.Parse(fecha);
+            bool f = prueba();
 
-            string QuerieInsert = "INSERT INTO Clientes (Nombre,Apellido,Problema,Resolucion,Remuneracion) VALUES (?,?,?,?,?)";
+            string QuerieInsertPrueba = "INSERT INTO Clientes (Estado) VALUES (?)";
+            string QuerieInsert = "INSERT INTO Clientes (Nombre,Apellido,Problema,Resolucion,Estado,Remuneracion,Fecha) VALUES (?,?,?,?,?,?,?)";
             OleDbCommand Micomando = new OleDbCommand(QuerieInsert, CN);
            
             //podria hacer un metodo para esto 
-            Micomando.Parameters.AddWithValue("?", nombre);
+            Micomando.Parameters.Add("?", nombre);
             Micomando.Parameters.Add("?", apellido);
             Micomando.Parameters.Add("?", problema);
             Micomando.Parameters.Add("?", resolucion);
+            Micomando.Parameters.Add("?", f); //no entiendo porque anda y tampoco porque no andaba
             Micomando.Parameters.Add("?", remuneracion);
-            //Micomando.Parameters.Add ("?", fecha); no hay una clase string para esto debo tener otro input
+            Micomando.Parameters.Add ("?", FechaReal); // ya anda
             try
             {
                 CN.Open();
@@ -189,10 +241,46 @@ namespace Dante3
 
             return dt2;
         }
-    
-     
+        public void BotonEliminar()
+        {
+            Eliminar();
+            CargarGrid();
+            LimpiezaTxts();
+        }
+        
+        public void BotonEditar()
+        {
+            Editar();
+            CargarGrid();
+            LimpiezaTxts();
+        }
+        public void BotonAgregar()
+        {
+            Agregar();
+            CargarGrid();
+            LimpiezaTxts();
+        }
+        public void LimpiezaCombo()
+        {
+            Cmb1.Items.Clear();
+            //Cmb1.DataSource = null;
+        }
+
+        public void LimpiezaTxts()
+        {
+            TxtId.Text = "";
+            TxtApellido.Text = "";
+            TxtFecha.Text = "";
+            TxtNombre.Text = "";
+            TxtProblema.Text = "";
+            TxtRemuneracion.Text = "";
+            TxtResolucion.Text = "";
+            TxtId.Text = "";
+            CmbBool.Text = "";
+        }
         public void CargarCombo()
         {
+            
             DataTable dt = CargarDatos();
             Cmb1.DataSource = dt;
             Cmb1.DisplayMember = "Nombre";
@@ -214,6 +302,8 @@ namespace Dante3
         {
             dtgv1.DataSource = null;
         }
+        #endregion
+        #region.CosasDelForm
         public Form1()
         {
             InitializeComponent();
@@ -223,16 +313,18 @@ namespace Dante3
         {
             // CargarCombo();
             //consultafallida();
-           // CargarGrid();
+           CargarGrid();
         }
 
         private void Btn1_Click(object sender, EventArgs e)
         {
+            LimpiezaCombo();
             consultaNombres();
         }
 
         private void Btn2_Click(object sender, EventArgs e)
         {
+            LimpiezaCombo();
             consultaApellidos();
         }
 
@@ -244,23 +336,127 @@ namespace Dante3
         private void Btn3_Click(object sender, EventArgs e)
         {
             //boton de editar
-            Editar();
-            CargarGrid();
+            if (Btn3.Text == "EDITAR")
+            {
+                button1.Visible = false;
+                button2.Visible = false;
+
+                // BotonEditar();
+                Btn3.Text = "MODIFICAR";
+            }
+            else
+            {  ///BOTON DE editar
+                BotonEditar();
+                Btn3.Text = "EDITAR";
+                button1.Visible = true;
+                button2.Visible = true;
+            }
+            
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
-            ///BOTON DE AGREGAR
-            Agregar();
-            CargarGrid();
-            
+            if (button1.Text == "AGREGAR" )
+            {
+                button1.Text = "GUARDAR";
+                Btn3.Visible = false;
+                button2.Visible = false;
+              
+            }
+            else 
+            {  ///BOTON DE AGREGAR
+                  BotonAgregar();
+                button1.Text = "AGREGAR";
+                Btn3.Visible = true;
+                button2.Visible = true;
+            }
+
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
             //BOTON DE ELIMINAR
-            Eliminar();
-            CargarGrid();
+            
+            if (button2.Text=="ELIMINAR")
+            {
+                button1.Visible=false;
+                Btn3.Visible=false;
+                button2.Text = "DAR DE BAJA";
+           
+            }
+            else
+            {  ///BOTON DE eliminar
+                BotonEliminar();
+                button2.Text = "ELIMINAR";
+                Btn3.Visible = true;
+                button1.Visible = true;
+            }
+        }
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            
+            //if (checkBox1.Checked)
+            //{
+            //    lblFinalizacion.Text = "HECHO";
+            //    f = true;
+            //}
+            //else 
+            //{
+            //    lblFinalizacion.Text = "NO HACER NADA";
+            //    f = false;
+            //}
+        }
+
+        private void button1_KeyPress(object sender, KeyPressEventArgs e)
+        {
+
+        }
+
+        private void dtgv1_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+             cero = e.RowIndex;// contiene el indice de la fila selecionada
+            int c = e.ColumnIndex;// contiene el indice de la columna selecionada
+
+            if (cero != -1)//solo hago que aparezca la descripcion si la fila es mayor a -1 //y una columna que exista osea mayor a 0// no funcio no
+            {   
+                var valor8 = dtgv1.Rows[cero].Cells[5].Value;
+                var valor7 = dtgv1.Rows[cero].Cells[6].Value;
+                var valor6 = dtgv1.Rows[cero].Cells[7].Value;
+                var valor5 = dtgv1.Rows[cero].Cells[4].Value; 
+                var valor4 = dtgv1.Rows[cero].Cells[3].Value; 
+                var valor3 = dtgv1.Rows[cero].Cells[2].Value; 
+                var valor2 = dtgv1.Rows[cero].Cells[1].Value; 
+                var valor = dtgv1.Rows[cero].Cells[0].Value; // ID en columna 0
+                if (valor != null)
+                    TxtId.Text = valor.ToString(); // Lo convierte a texto 
+                else
+                {
+                   // TxtId.Text = ""; // Limpia si no hay valor
+                    LimpiezaTxts();
+                }
+                // TxtId.Text= (string)dtgv1.Rows[cero].Cells[1].Value;// paso el valor a string 
+                TxtNombre.Text = valor2.ToString();
+                TxtApellido.Text = valor3.ToString();
+                TxtProblema.Text = valor4.ToString();
+                TxtRemuneracion.Text = valor7.ToString();
+                TxtResolucion.Text = valor5.ToString();
+                TxtFecha.Text = valor6.ToString();
+                CmbBool.Text = valor8.ToString();
+                 
+            }
+        
+        }
+        #endregion
+
+        private void lblFinalizacion_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void CmbBool_SelectionChangeCommitted(object sender, EventArgs e)
+        {
+            //prueba();
         }
     }
 }
